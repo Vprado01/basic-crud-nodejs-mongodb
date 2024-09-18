@@ -15,7 +15,7 @@ const getBook = async (req, res, next) => {
     }
     try {
         book = await Book.findById(id);
-        if(!book){
+        if (!book) {
             return res.status(404).json(
                 {
                     message: "Book not found"
@@ -29,7 +29,7 @@ const getBook = async (req, res, next) => {
             }
         )
     }
-    next.book = book
+    res.book = book //setea book como una propiedad de res
     next()
 }
 
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
         if (books.length == 0) {
             res.status(204).json([])
         }
-        res(books)
+        res.json(books)
     } catch (error) {
         return res.status(500).json({ message: error.message })
     }
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
             title, //title:title
             author,
             genre,
-            publication_date
+            publicationDate
         }
     )
     try {
@@ -72,3 +72,66 @@ router.post('/', async (req, res) => {
         message: error.message
     }
 })
+
+router.get('/:id', getBook, async (req, res) => {
+    res.json(res.book);
+})
+
+router.put('/:id', getBook, async (req, res) => {
+    try {
+        const book = res.book
+        book.title = req.body.title || book.title;
+        book.author = req.body.author || book.author;
+        book.genre = req.body.genre || book.genre;
+        book.publicationDate = req.body.publicationDate || book.publicationDate;
+
+        const updatedBook = await book.save()
+        res.json(updatedBook)
+        console.log(updatedBook)
+    } catch (error) {
+        res.status(400).json({
+            message: error.message
+        })
+    }
+})
+
+router.patch('/:id', getBook, async (req, res) => {
+    if (!req.body.title && !req.body.genre && !req.body.author && !req.body.publicationDate) {
+        res.status(400).json({
+            message: "At least one field must be sent"
+        })
+    }
+    try {
+        const book = res.book
+        book.title = req.body.title || book.title;
+        book.author = req.body.author || book.author;
+        book.genre = req.body.genre || book.genre;
+        book.publicationDate = req.body.publicationDate || book.publicationDate;
+
+        const updatedBook = await book.save()
+        res.json(updatedBook)
+    } catch (error) {
+        res.status(400).json({
+            message: error.message
+        })
+    }
+})
+
+router.delete('/:id', getBook, async (req, res) => {
+    try {
+        const book = res.book
+        await book.deleteOne({
+            _id: book._id
+        })
+        res.json({
+            message: `${book.title} has been deleted`
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: error.message
+        })
+
+    }
+})
+
+module.exports = router
